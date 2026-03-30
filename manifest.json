@@ -1,0 +1,18 @@
+{
+  "name": "100 Rounds of Monsters",
+  "short_name": "100 Rounds",
+  "description": "Survive 100 rounds of monsters, build your pet squad, and unleash the banana bomb!",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "background_color": "#000000",
+  "theme_color": "#e74c3c",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
