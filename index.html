@@ -5,7 +5,7 @@
     <meta name="theme-color" content="#e74c3c">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>100 Rounds - Inventory Update</title>
+    <title>100 Rounds - Mobile UX Update</title>
     <style>
         body { margin: 0; padding: 0; background-color: #000; color: white; font-family: sans-serif; overflow: hidden; touch-action: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
         #ui { text-align: center; background: #222; padding: 5px 0; font-size: 14px; flex-shrink: 0; border-bottom: 2px solid #333; z-index: 10; }
@@ -23,7 +23,7 @@
         #gameContainer { flex: 1 1 auto; min-height: 0; display: flex; justify-content: center; align-items: center; background-color: #000; width: 100%; position: relative; }
         canvas { background-color: #eee; max-width: 100%; max-height: 100%; aspect-ratio: 1 / 1; object-fit: contain; border: 2px solid #555; box-sizing: border-box; display: block; }
         
-        /* NEW INVENTORY BAR */
+        /* INVENTORY BAR */
         #inventoryBar { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: none; gap: 15px; z-index: 20; }
         .inv-slot { width: 60px; height: 60px; border: 3px solid #7f8c8d; border-radius: 12px; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; user-select: none; color: rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.1s; }
         .inv-slot.filled { border-color: #f1c40f; background: rgba(50,50,50,0.8); color: #fff; }
@@ -40,7 +40,7 @@
         .joystick { width: 140px; height: 140px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; position: relative; touch-action: none; }
         .knob { width: 60px; height: 60px; background: rgba(255, 255, 255, 0.7); border-radius: 50%; position: absolute; top: 40px; left: 40px; pointer-events: none; }
         .joy-text { position: absolute; top: 60px; width: 100%; text-align: center; color: white; font-weight: bold; font-size: 16px; pointer-events: none; opacity: 0.5; }
-        #practiceSpawner { display: none; position: absolute; top: 75px; width: 100%; text-align: center; z-index: 50; }
+        #practiceSpawner { display: none; position: absolute; top: 65px; width: 100%; text-align: center; z-index: 50; }
         
         @media (orientation: landscape) {
             #ui { display: none; } 
@@ -55,17 +55,21 @@
     <div id="ui"><h2>Rotate phone for Landscape overlay, or keep Portrait for bottom panel.</h2></div>
     
     <div id="practiceSpawner">
-        <div style="margin-bottom: 5px;">
-            <button onclick="spawnPet('normal', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: #f1c40f; border-color: #f39c12;">+ Yellow Pet</button>
-            <button onclick="spawnPet('ultra', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: #9b59b6; border-color: #8e44ad;">+ Purple Pet</button>
-            <button onclick="spawnPet('mega', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: #e67e22; border-color: #d35400;">+ Orange Pet</button>
-            <button onclick="spawnPet('rainbowPet', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: linear-gradient(90deg, red, orange, yellow, green, blue, purple); border-color: white;">+ RAINBOW</button>
-        </div>
-        <div>
-            <button onclick="giveBanana()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #f39c12; border-color: white;">🍌 Give Banana</button>
-            <button onclick="giveShield()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #00FFFF; color: black; border-color: white;">🛡️ Give Shield</button>
-            <button onclick="giveRampage()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #ff00ff; border-color: white;">⭐ Give Rampage</button>
-            <button onclick="giveGodMode()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #ffffff; color: #000; border-color: #00FFFF;">⚡ Give God Lasers</button>
+        <button id="toggleSpawnerBtn" onclick="toggleSpawner()" class="menu-btn" style="padding: 6px 15px; font-size: 14px; background: #34495e; border-color: #2c3e50; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🛠️ Show Tools</button>
+        
+        <div id="spawnerButtons" style="display: none; background: rgba(0,0,0,0.85); padding: 10px; border-radius: 10px; margin-top: 5px; max-width: 95%; margin-left: auto; margin-right: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+            <div style="margin-bottom: 5px;">
+                <button onclick="spawnPet('normal', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: #f1c40f; border-color: #f39c12;">+ Yellow Pet</button>
+                <button onclick="spawnPet('ultra', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: #9b59b6; border-color: #8e44ad;">+ Purple Pet</button>
+                <button onclick="spawnPet('mega', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: #e67e22; border-color: #d35400;">+ Orange Pet</button>
+                <button onclick="spawnPet('rainbowPet', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: linear-gradient(90deg, red, orange, yellow, green, blue, purple); border-color: white;">+ RAINBOW</button>
+            </div>
+            <div>
+                <button onclick="giveBanana()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #f39c12; border-color: white;">🍌 Give Banana</button>
+                <button onclick="giveShield()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #00FFFF; color: black; border-color: white;">🛡️ Give Shield</button>
+                <button onclick="giveRampage()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #ff00ff; border-color: white;">⭐ Give Rampage</button>
+                <button onclick="giveGodMode()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #ffffff; color: #000; border-color: #00FFFF;">⚡ Give God Lasers</button>
+            </div>
         </div>
     </div>
 
@@ -160,12 +164,12 @@
     document.getElementById('joystickLeft').addEventListener('touchend', (e) => resetJoystick(e, true), {passive: false});
     document.getElementById('joystickRight').addEventListener('touchstart', (e) => handleJoystick(e, false), {passive: false});
     document.getElementById('joystickRight').addEventListener('touchmove', (e) => handleJoystick(e, false), {passive: false});
+    document.getElementById('joystickRight').addEventListener('touchmove', (e) => handleJoystick(e, false), {passive: false});
     document.getElementById('joystickRight').addEventListener('touchend', (e) => resetJoystick(e, false), {passive: false});
 
     const player = { x: canvas.width / 2, y: canvas.height / 2, size: 30, hitbox: 15, speed: 6, health: 100, maxHealth: 100, color: "#2ecc71", angle: 0, giantTimer: 0, godModeTimer: 0, lastGodShot: 0 };
     let bullets = []; let enemyBullets = []; let monsters = []; let bosses = []; let playerPets = [];
     
-    // NEW ITEM DROPS & INVENTORY ARRAYS
     let bananas = []; let shields = []; let stars = []; let lightnings = []; 
     let inventory = []; const MAX_INV = 3;
     let keys = {};
@@ -173,6 +177,14 @@
     let lastShotTime = 0; let isBursting = false; let burstShotsFired = 0; let lastBurstBulletTime = 0; 
     let hasShield = false; let explosionAlpha = 0; 
     const fpsInterval = 1000 / 30; let then = performance.now();
+
+    // TOGGLE SPAWNER UI FOR MOBILE
+    let spawnerVisible = false;
+    window.toggleSpawner = function() {
+        spawnerVisible = !spawnerVisible;
+        document.getElementById('spawnerButtons').style.display = spawnerVisible ? 'block' : 'none';
+        document.getElementById('toggleSpawnerBtn').innerText = spawnerVisible ? '🛠️ Hide Tools' : '🛠️ Show Tools';
+    };
 
     function resetGame() {
         document.getElementById('startScreen').style.display = 'none'; document.getElementById('gameOverScreen').style.display = 'none'; document.getElementById('winScreen').style.display = 'none';
@@ -188,6 +200,12 @@
     window.startPractice = function(bossType) {
         document.getElementById('startScreen').style.display = 'none'; topStatsUI.style.display = 'flex'; inventoryBarUI.style.display = 'flex'; statBossUI.style.display = 'none';
         practiceSpawnerUI.style.display = 'block'; 
+        
+        // Hide the spawner grid by default so screen isn't blocked
+        spawnerVisible = false;
+        document.getElementById('spawnerButtons').style.display = 'none';
+        document.getElementById('toggleSpawnerBtn').innerText = '🛠️ Show Tools';
+
         isPracticeMode = true; player.health = player.maxHealth; player.x = canvas.width / 2; player.y = canvas.height / 2; player.giantTimer = 0; player.godModeTimer = 0;
         playerPets = []; bullets = []; enemyBullets = []; monsters = []; bosses = []; bananas = []; shields = []; stars = []; lightnings = []; inventory = [];
         hasShield = false; explosionAlpha = 0; resetJoystick(null, true); resetJoystick(null, false);
@@ -197,11 +215,10 @@
 
     ['btnStart', 'btnRestart', 'btnPlayAgainWin'].forEach(id => { document.getElementById(id).addEventListener('click', resetGame); document.getElementById(id).addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); }, {passive: false}); });
 
-    // NEW INVENTORY USE FUNCTION
     window.useItem = function(index) {
         if (index >= inventory.length || gameState !== "PLAYING") return;
         let type = inventory[index];
-        inventory.splice(index, 1); // Remove from inventory
+        inventory.splice(index, 1); 
         
         if (type === 'banana') {
             monsters = []; 
@@ -222,7 +239,6 @@
         }
     };
 
-    // Keyboard controls for Inventory
     window.addEventListener("keydown", (e) => { 
         keys[e.key.toLowerCase()] = true; 
         if (e.key === '1') useItem(0);
@@ -252,7 +268,6 @@
         bosses.push({ x: Math.random() < 0.5 ? -100 : canvas.width + 100, y: canvas.height / 2, size: size, hitbox: size / 2, speed: 1.0 + ((isPracticeMode ? 50 : round) * 0.02), color: color, health: hp, maxHealth: hp, angle: 0, type: type, lastShotTime: Date.now(), lastHitTime: 0 });
     }
 
-    // POWER-UP GIVER FUNCTIONS (Adds directly to inventory)
     window.giveBanana = function() { if(inventory.length < MAX_INV) inventory.push('banana'); };
     window.giveShield = function() { if(inventory.length < MAX_INV) inventory.push('shield'); };
     window.giveRampage = function() { if(inventory.length < MAX_INV) inventory.push('star'); }; 
@@ -284,7 +299,6 @@
     function update(elapsedTime) {
         if (gameState !== "PLAYING") return; const now = Date.now();
         
-        // UPDATE INVENTORY UI
         for (let i = 0; i < 3; i++) {
             let slot = document.getElementById('slot' + i);
             if (inventory[i]) {
@@ -323,7 +337,6 @@
         let cHitbox = isGiant ? player.hitbox * 2 : player.hitbox;
         if (isUsingMouse) player.angle = Math.atan2(mouseY - player.y, mouseX - player.x); else if (aimVector.active) player.angle = Math.atan2(aimVector.y, aimVector.x);
         
-        // NORMAL BURST FIRE
         if (!isBursting && now - lastShotTime >= 600) {
             isBursting = true; burstShotsFired = 0; lastBurstBulletTime = 0;
         }
@@ -333,7 +346,6 @@
             if (burstShotsFired >= 4) { isBursting = false; lastShotTime = now; }
         }
 
-        // 8-WAY GOD MODE LASERS
         if (isGodMode && now - player.lastGodShot >= 150) { 
             for (let i = 0; i < 8; i++) {
                 let angle = i * (Math.PI / 4); 
@@ -363,7 +375,6 @@
         if (keys["w"] || keys["arrowup"]) ny -= ps; if (keys["s"] || keys["arrowdown"]) ny += ps; if (keys["a"] || keys["arrowleft"]) nx -= ps; if (keys["d"] || keys["arrowright"]) nx += ps;
         if (nx - cHitbox > 0 && nx + cHitbox < canvas.width) player.x = nx; if (ny - cHitbox > 0 && ny + cHitbox < canvas.height) player.y = ny;
 
-        // PICK UP ITEMS INTO INVENTORY (Only if there is space!)
         for (let i = bananas.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, bananas[i].x, bananas[i].y) < cHitbox + bananas[i].radius) { if(inventory.length < MAX_INV) { inventory.push('banana'); bananas.splice(i, 1); } }
         for (let i = shields.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, shields[i].x, shields[i].y) < cHitbox + shields[i].radius) { if(inventory.length < MAX_INV) { inventory.push('shield'); shields.splice(i, 1); } }
         for (let i = stars.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, stars[i].x, stars[i].y) < cHitbox + stars[i].radius) { if(inventory.length < MAX_INV) { inventory.push('star'); stars.splice(i, 1); } }
@@ -421,7 +432,6 @@
                 else if (round % 5 === 0) spawnBoss('mini'); 
                 else spawnMonsters(); 
                 
-                // Drop God Mode Lightning Item every 20 rounds!
                 if (round % 20 === 0) spawnItem(lightnings);
 
                 if (round % 3 === 0) spawnItem(bananas); if (round % 5 === 0) spawnItem(shields); if (round % 11 === 0) spawnItem(stars); 
@@ -433,12 +443,10 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height); let isGiant = player.giantTimer > 0; let isGodMode = player.godModeTimer > 0;
         if (explosionAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 100, ${explosionAlpha})`; ctx.fillRect(0, 0, canvas.width, canvas.height); explosionAlpha -= 0.03; }
         
-        // DRAW ITEMS ON GROUND
         bananas.forEach(b => { let p = Math.abs(Math.sin(Date.now()/150))*15; let g = ctx.createRadialGradient(b.x, b.y, 5, b.x, b.y, b.radius+p); g.addColorStop(0, "rgba(255,0,0,0.6)"); g.addColorStop(1, "rgba(0,0,255,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, b.radius+p, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(b.x, b.y-5, 10, 0, Math.PI); ctx.stroke(); });
         shields.forEach(s => { let p = Math.abs(Math.sin(Date.now()/200))*5; ctx.fillStyle = "#00FFFF"; ctx.beginPath(); ctx.moveTo(s.x, s.y-s.radius-p); ctx.lineTo(s.x+s.radius+p, s.y); ctx.lineTo(s.x, s.y+s.radius+p); ctx.lineTo(s.x-s.radius-p, s.y); ctx.fill(); ctx.closePath(); ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke(); });
         stars.forEach(s => { let p = Math.abs(Math.sin(Date.now()/100))*8; ctx.fillStyle = "#ff00ff"; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius+p, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = "white"; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius/2, 0, Math.PI*2); ctx.fill(); });
         
-        // DRAW LIGHTNING DROPS
         lightnings.forEach(l => { 
             let p = Math.abs(Math.sin(Date.now()/50))*10; 
             ctx.fillStyle = "#00FFFF"; ctx.beginPath(); ctx.arc(l.x, l.y, l.radius+p, 0, Math.PI*2); ctx.fill(); 
@@ -474,7 +482,7 @@
             ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.angle); 
             ctx.fillStyle = b.color === "rainbow" ? `hsl(${(Date.now()/5)%360}, 100%, 50%)` : b.color; 
             let bw = b.hitbox>6?16:10, bh = b.hitbox>6?12:8; 
-            if (b.color === "#ffffff") { bw = 30; bh = 6; } // God Lasers
+            if (b.color === "#ffffff") { bw = 30; bh = 6; } 
             ctx.fillRect(-bw/2, -bh/2, bw, bh); ctx.fillStyle = "#888"; ctx.beginPath(); ctx.moveTo(bw/2-3, -bh/2); ctx.lineTo(bw/2+3, -bh/4); ctx.lineTo(bw/2+3, bh/4); ctx.lineTo(bw/2-3, bh/2); ctx.fill(); ctx.closePath(); ctx.restore(); 
         });
         enemyBullets.forEach(bb => { ctx.fillStyle = bb.color; ctx.beginPath(); ctx.arc(bb.x, bb.y, bb.radius, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = "red"; ctx.lineWidth = 2; ctx.stroke(); });
