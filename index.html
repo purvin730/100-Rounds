@@ -5,577 +5,483 @@
     <meta name="theme-color" content="#e74c3c">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>100 Rounds of Monsters - Big Controls & Clean HUD Edition</title>
+    <title>100 Rounds - Inventory Update</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #000; 
-            color: white;
-            font-family: sans-serif;
-            overflow: hidden; 
-            touch-action: none; 
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #ui {
-            text-align: center; background: #222; padding: 5px 0;
-            font-size: 14px; flex-shrink: 0; border-bottom: 2px solid #333; z-index: 10;
-        }
+        body { margin: 0; padding: 0; background-color: #000; color: white; font-family: sans-serif; overflow: hidden; touch-action: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
+        #ui { text-align: center; background: #222; padding: 5px 0; font-size: 14px; flex-shrink: 0; border-bottom: 2px solid #333; z-index: 10; }
         #ui h2 { margin: 5px 0; font-size: 16px; }
-
-        /* --- NEW: Top HUD for Stats --- */
-        #topStats {
-            display: none; /* Hidden until game starts */
-            flex-wrap: wrap;
-            justify-content: space-around;
-            align-items: center;
-            background: #111;
-            padding: 10px 5px;
-            border-bottom: 2px solid #444;
-            flex-shrink: 0;
-            z-index: 10;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        .stat-group { display: flex; align-items: center; gap: 8px; margin: 5px; }
-        .bar-bg { width: 120px; height: 18px; background: #550000; border: 2px solid #000; border-radius: 4px; overflow: hidden; }
-        .bar-fill { height: 100%; width: 100%; transition: width 0.1s linear, background-color 0.2s; }
-        #hpFill { background: #2ecc71; }
-        #bossFill { background: #f1c40f; } /* Dynamically changes color based on boss */
-        #statusText { font-size: 16px; font-weight: bold; text-shadow: 1px 1px 0 #000; min-width: 140px; text-align: center; }
-        /* ------------------------------ */
-
-        #gameContainer {
-            flex: 1 1 auto; min-height: 0; 
-            display: flex; justify-content: center; align-items: center;
-            background-color: #000; width: 100%; position: relative;
-        }
         
-        canvas {
-            background-color: #eee;
-            max-width: 100%; max-height: 100%;
-            aspect-ratio: 1 / 1; object-fit: contain; 
-            border: 2px solid #555; box-sizing: border-box; display: block;
-        }
-
-        .menu-overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 100; text-align: center;
-        }
+        /* FIXED TOP HUD */
+        #topStats { display: none; flex-wrap: wrap; justify-content: center; gap: 15px; align-items: center; background: #111; padding: 12px 5px; border-bottom: 2px solid #444; flex-shrink: 0; z-index: 10; font-weight: bold; font-size: 16px; min-height: 45px; }
+        .stat-group { display: flex; align-items: center; gap: 8px; margin: 0 10px; }
+        .bar-bg { width: 140px; height: 20px; background: #333; border: 2px solid #000; border-radius: 6px; overflow: hidden; box-shadow: inset 0 0 5px #000; }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.1s linear, background 0.2s; }
+        #hpFill { background: #2ecc71; } 
+        #bossFill { background: #f1c40f; } 
+        #statusText { font-size: 16px; font-weight: bold; text-shadow: 1px 1px 0 #000; text-align: center; color: #ff00ff; }
         
+        #gameContainer { flex: 1 1 auto; min-height: 0; display: flex; justify-content: center; align-items: center; background-color: #000; width: 100%; position: relative; }
+        canvas { background-color: #eee; max-width: 100%; max-height: 100%; aspect-ratio: 1 / 1; object-fit: contain; border: 2px solid #555; box-sizing: border-box; display: block; }
+        
+        /* NEW INVENTORY BAR */
+        #inventoryBar { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: none; gap: 15px; z-index: 20; }
+        .inv-slot { width: 60px; height: 60px; border: 3px solid #7f8c8d; border-radius: 12px; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; user-select: none; color: rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.1s; }
+        .inv-slot.filled { border-color: #f1c40f; background: rgba(50,50,50,0.8); color: #fff; }
+        .inv-slot:active { transform: scale(0.9); }
+        .inv-label { position: absolute; top: -20px; font-size: 12px; color: #ccc; font-weight: bold; }
+
+        .menu-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; }
         .menu-title { font-size: 40px; font-weight: bold; color: #e74c3c; margin-bottom: 10px; text-shadow: 2px 2px 0px #000; }
         .menu-subtitle { font-size: 20px; color: #ccc; margin-bottom: 30px; }
-        .menu-btn {
-            padding: 15px 40px; font-size: 24px; font-weight: bold; background: #2ecc71;
-            color: white; border: 4px solid #27ae60; border-radius: 12px; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: auto;
-        }
+        .menu-btn { padding: 15px 40px; font-size: 24px; font-weight: bold; background: #2ecc71; color: white; border: 4px solid #27ae60; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: auto; margin: 5px;}
         .menu-btn:active { background: #27ae60; transform: scale(0.95); }
-
         #gameOverScreen, #winScreen { display: none; }
+        #touchControls { flex: 0 0 200px; background: #1a1a1a; border-top: 2px solid #333; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; box-sizing: border-box; width: 100%; position: relative; z-index: 10; }
+        .joystick { width: 140px; height: 140px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; position: relative; touch-action: none; }
+        .knob { width: 60px; height: 60px; background: rgba(255, 255, 255, 0.7); border-radius: 50%; position: absolute; top: 40px; left: 40px; pointer-events: none; }
+        .joy-text { position: absolute; top: 60px; width: 100%; text-align: center; color: white; font-weight: bold; font-size: 16px; pointer-events: none; opacity: 0.5; }
+        #practiceSpawner { display: none; position: absolute; top: 75px; width: 100%; text-align: center; z-index: 50; }
         
-        /* PORTRAIT MODE */
-        #touchControls {
-            flex: 0 0 200px; /* Made taller to fit bigger joysticks */
-            background: #1a1a1a; border-top: 2px solid #333;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px; box-sizing: border-box; width: 100%; position: relative; z-index: 10;
-        }
-
-        /* BIGGER JOYSTICKS */
-        .joystick {
-            width: 140px; height: 140px; 
-            background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%; position: relative; touch-action: none;
-        }
-
-        .knob {
-            width: 60px; height: 60px; background: rgba(255, 255, 255, 0.7);
-            border-radius: 50%; position: absolute; top: 40px; left: 40px; pointer-events: none;
-        }
-
-        .joy-text {
-            position: absolute; top: 60px; width: 100%; text-align: center;
-            color: white; font-weight: bold; font-size: 16px; pointer-events: none; opacity: 0.5;
-        }
-
-        #btnBanana {
-            position: absolute; left: 50%; transform: translateX(-50%);
-            padding: 15px 20px; font-size: 16px; font-weight: bold; background: #f39c12;
-            color: white; border: 3px solid #e67e22; border-radius: 12px; display: none; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10; pointer-events: auto;
-        }
-        #btnBanana:active { background: #e67e22; transform: translateX(-50%) scale(0.95); }
-
-        /* LANDSCAPE MODE */
         @media (orientation: landscape) {
             #ui { display: none; } 
-            #touchControls {
-                position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-                height: auto; width: 100%; background: transparent; border: none; 
-                display: flex; align-items: flex-end; padding: 20px 40px; pointer-events: none; 
-            }
-            /* Even bigger in landscape */
+            #touchControls { position: absolute; top: 0; left: 0; right: 0; bottom: 0; height: auto; width: 100%; background: transparent; border: none; display: flex; align-items: flex-end; padding: 20px 40px; pointer-events: none; }
             .joystick { width: 160px; height: 160px; background: rgba(255, 255, 255, 0.2); pointer-events: auto; }
-            .knob { width: 70px; height: 70px; top: 45px; left: 45px; }
-            .joy-text { top: 70px; font-size: 18px; }
-            #btnBanana { bottom: 20px; pointer-events: auto; }
+            .knob { width: 70px; height: 70px; top: 45px; left: 45px; } .joy-text { top: 70px; font-size: 18px; }
+            #inventoryBar { bottom: 20px; }
         }
     </style>
 </head>
 <body>
-
-    <div id="ui">
-        <h2>Rotate phone for Landscape overlay, or keep Portrait for bottom panel.</h2>
+    <div id="ui"><h2>Rotate phone for Landscape overlay, or keep Portrait for bottom panel.</h2></div>
+    
+    <div id="practiceSpawner">
+        <div style="margin-bottom: 5px;">
+            <button onclick="spawnPet('normal', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: #f1c40f; border-color: #f39c12;">+ Yellow Pet</button>
+            <button onclick="spawnPet('ultra', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: #9b59b6; border-color: #8e44ad;">+ Purple Pet</button>
+            <button onclick="spawnPet('mega', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: #e67e22; border-color: #d35400;">+ Orange Pet</button>
+            <button onclick="spawnPet('rainbowPet', player.x, player.y)" class="menu-btn" style="padding: 8px; font-size: 14px; background: linear-gradient(90deg, red, orange, yellow, green, blue, purple); border-color: white;">+ RAINBOW</button>
+        </div>
+        <div>
+            <button onclick="giveBanana()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #f39c12; border-color: white;">🍌 Give Banana</button>
+            <button onclick="giveShield()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #00FFFF; color: black; border-color: white;">🛡️ Give Shield</button>
+            <button onclick="giveRampage()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #ff00ff; border-color: white;">⭐ Give Rampage</button>
+            <button onclick="giveGodMode()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #ffffff; color: #000; border-color: #00FFFF;">⚡ Give God Lasers</button>
+        </div>
     </div>
 
     <div id="topStats">
-        <div class="stat-group" id="roundText">Round: 1 / 100</div>
-        <div class="stat-group">
-            HP: <div class="bar-bg"><div class="bar-fill" id="hpFill"></div></div>
-        </div>
-        <div class="stat-group" id="statBoss" style="display: none;">
-            BOSS: <div class="bar-bg"><div class="bar-fill" id="bossFill"></div></div>
-        </div>
+        <div class="stat-group" id="roundText" style="color: #3498db;">Round: 1 / 100</div>
+        <div class="stat-group">HP: <div class="bar-bg"><div class="bar-fill" id="hpFill"></div></div></div>
         <div id="statusText"></div>
+        <div class="stat-group" id="statBoss" style="display: none; width: 100%; justify-content: center; margin-top: 5px;">
+            <span style="color: #f1c40f;">BOSS:</span> 
+            <div class="bar-bg" style="width: 250px;"><div class="bar-fill" id="bossFill"></div></div>
+        </div>
     </div>
     
     <div id="gameContainer">
         <canvas id="gameCanvas" width="800" height="800"></canvas>
         
-        <div id="startScreen" class="menu-overlay">
-            <div class="menu-title" style="color: #3498db;">100 ROUNDS</div>
-            <div class="menu-subtitle">Survive the swarm. Build your squad.</div>
-            <button id="btnStart" class="menu-btn">START GAME</button>
+        <div id="inventoryBar">
+            <div style="position: relative;">
+                <div class="inv-label">1</div>
+                <div class="inv-slot" id="slot0" onclick="useItem(0)">1</div>
+            </div>
+            <div style="position: relative;">
+                <div class="inv-label">2</div>
+                <div class="inv-slot" id="slot1" onclick="useItem(1)">2</div>
+            </div>
+            <div style="position: relative;">
+                <div class="inv-label">3</div>
+                <div class="inv-slot" id="slot2" onclick="useItem(2)">3</div>
+            </div>
         </div>
 
+        <div id="startScreen" class="menu-overlay">
+            <div class="menu-title" style="color: #3498db;">100 ROUNDS</div>
+            <div class="menu-subtitle">Survive the swarm. Save your items.</div>
+            <button id="btnStart" class="menu-btn" style="margin-bottom: 25px;">START GAME</button>
+            <div style="background: rgba(0,0,0,0.5); padding: 15px; border: 2px dashed #3498db; border-radius: 10px; width: 85%; max-width: 450px;">
+                <h3 style="margin: 0 0 15px 0; color: #ccc;">PRACTICE ARENA</h3>
+                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+                    <button onclick="startPractice('mini')" class="menu-btn" style="font-size: 14px; padding: 10px; background: #3498db; border: 2px solid #2980b9;">Blue Boss</button>
+                    <button onclick="startPractice('normal')" class="menu-btn" style="font-size: 14px; padding: 10px; background: #f1c40f; border: 2px solid #f39c12;">Yellow Boss</button>
+                    <button onclick="startPractice('ultra')" class="menu-btn" style="font-size: 14px; padding: 10px; background: #9b59b6; border: 2px solid #8e44ad;">Purple Boss</button>
+                    <button onclick="startPractice('mega')" class="menu-btn" style="font-size: 14px; padding: 10px; background: #e67e22; border: 2px solid #d35400;">Orange Boss</button>
+                    <button onclick="startPractice('rainbowMini')" class="menu-btn" style="font-size: 14px; padding: 10px; background: linear-gradient(90deg, red, orange, yellow, green, blue, purple); border: 2px solid white;">Rainbow Mini Boss</button>
+                    <button onclick="startPractice('rainbow')" class="menu-btn" style="font-size: 16px; padding: 12px; background: linear-gradient(90deg, red, orange, yellow, green, blue, purple); border: 2px solid white; width: 100%;">Final Rainbow Boss</button>
+                </div>
+            </div>
+        </div>
         <div id="gameOverScreen" class="menu-overlay">
             <div class="menu-title">CHOMPED!</div>
             <div class="menu-subtitle" id="roundDisplay">You survived to Round 1</div>
             <button id="btnRestart" class="menu-btn">PLAY AGAIN</button>
         </div>
-
         <div id="winScreen" class="menu-overlay">
-            <div class="menu-title" style="color: #f1c40f;">VICTORY!</div>
-            <div class="menu-subtitle">You survived all 100 rounds!</div>
+            <div class="menu-title" style="color: #f1c40f;">Awesome Job!</div>
+            <div class="menu-subtitle" id="winSubtitle">You won a cookie! 🍪</div>
             <button id="btnPlayAgainWin" class="menu-btn">PLAY AGAIN</button>
         </div>
     </div>
 
     <div id="touchControls">
-        <div id="joystickLeft" class="joystick">
-            <div class="joy-text">Move</div>
-            <div class="knob" id="knobLeft"></div>
-        </div>
-        
-        <button id="btnBanana">Banana Bomb!</button>
-        
-        <div id="joystickRight" class="joystick">
-            <div class="joy-text">Aim</div>
-            <div class="knob" id="knobRight"></div>
-        </div>
+        <div id="joystickLeft" class="joystick"><div class="joy-text">Move</div><div class="knob" id="knobLeft"></div></div>
+        <div id="joystickRight" class="joystick"><div class="joy-text">Aim</div><div class="knob" id="knobRight"></div></div>
     </div>
 
 <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    const canvas = document.getElementById("gameCanvas"); const ctx = canvas.getContext("2d");
+    const roundTextUI = document.getElementById('roundText'); const hpFillUI = document.getElementById('hpFill');
+    const statBossUI = document.getElementById('statBoss'); const bossFillUI = document.getElementById('bossFill');
+    const statusTextUI = document.getElementById('statusText'); const topStatsUI = document.getElementById('topStats');
+    const practiceSpawnerUI = document.getElementById('practiceSpawner');
+    const inventoryBarUI = document.getElementById('inventoryBar');
 
-    // HUD Elements
-    const roundTextUI = document.getElementById('roundText');
-    const hpFillUI = document.getElementById('hpFill');
-    const statBossUI = document.getElementById('statBoss');
-    const bossFillUI = document.getElementById('bossFill');
-    const statusTextUI = document.getElementById('statusText');
-    const topStatsUI = document.getElementById('topStats');
+    let gameState = "START"; let round = 1; let maxRounds = 100; let isPracticeMode = false;
+    let mouseX = canvas.width / 2; let mouseY = canvas.height / 2; let isUsingMouse = true;
+    canvas.addEventListener("mousemove", (e) => { const r = canvas.getBoundingClientRect(); mouseX = (e.clientX - r.left) * (canvas.width / r.width); mouseY = (e.clientY - r.top) * (canvas.height / r.height); isUsingMouse = true; });
 
-    // Game State
-    let gameState = "START"; 
-    let round = 1;
-    let maxRounds = 100;
-
-    let mouseX = canvas.width / 2;
-    let mouseY = canvas.height / 2;
-    let isUsingMouse = true;
-
-    canvas.addEventListener("mousemove", (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        mouseX = (e.clientX - rect.left) * scaleX;
-        mouseY = (e.clientY - rect.top) * scaleY;
-        isUsingMouse = true; 
-    });
-
-    let moveVector = { x: 0, y: 0 };
-    let aimVector = { x: 0, y: 0, active: false };
-
+    let moveVector = { x: 0, y: 0 }; let aimVector = { x: 0, y: 0, active: false };
     function handleJoystick(e, isLeft) {
-        if (gameState !== "PLAYING") return;
-        e.preventDefault();
+        if (gameState !== "PLAYING" || e.targetTouches.length === 0) return; e.preventDefault();
         let joy = isLeft ? document.getElementById('joystickLeft') : document.getElementById('joystickRight');
         let knob = isLeft ? document.getElementById('knobLeft') : document.getElementById('knobRight');
-        
-        if (e.targetTouches.length === 0) return;
-        let touch = e.targetTouches[0];
-        
-        let rect = joy.getBoundingClientRect();
-        let centerX = rect.left + rect.width / 2;
-        let centerY = rect.top + rect.height / 2;
-        
-        let dx = touch.clientX - centerX; let dy = touch.clientY - centerY;
-        let maxDist = rect.width / 2 - knob.offsetWidth / 2;
-        let distance = Math.sqrt(dx*dx + dy*dy);
-        
+        let rect = joy.getBoundingClientRect(); let dx = e.targetTouches[0].clientX - (rect.left + rect.width / 2); let dy = e.targetTouches[0].clientY - (rect.top + rect.height / 2);
+        let maxDist = rect.width / 2 - knob.offsetWidth / 2; let distance = Math.sqrt(dx*dx + dy*dy);
         if (distance > maxDist) { dx = (dx / distance) * maxDist; dy = (dy / distance) * maxDist; }
         knob.style.transform = `translate(${dx}px, ${dy}px)`;
-        
-        let nx = dx / maxDist; let ny = dy / maxDist;
-        if (isLeft) { moveVector.x = nx; moveVector.y = ny; } 
-        else {
-            if (distance > 5) { 
-                isUsingMouse = false; aimVector.active = true;
-                aimVector.x = nx; aimVector.y = ny; player.angle = Math.atan2(ny, nx);
-            }
-        }
+        if (isLeft) { moveVector.x = dx / maxDist; moveVector.y = dy / maxDist; } else { if (distance > 5) { isUsingMouse = false; aimVector.active = true; aimVector.x = dx / maxDist; aimVector.y = dy / maxDist; player.angle = Math.atan2(dy, dx); } }
     }
+    function resetJoystick(e, isLeft) { if(e) e.preventDefault(); (isLeft ? document.getElementById('knobLeft') : document.getElementById('knobRight')).style.transform = `translate(0px, 0px)`; if (isLeft) { moveVector.x = 0; moveVector.y = 0; } else aimVector.active = false; }
+    
+    document.getElementById('joystickLeft').addEventListener('touchstart', (e) => handleJoystick(e, true), {passive: false});
+    document.getElementById('joystickLeft').addEventListener('touchmove', (e) => handleJoystick(e, true), {passive: false});
+    document.getElementById('joystickLeft').addEventListener('touchend', (e) => resetJoystick(e, true), {passive: false});
+    document.getElementById('joystickRight').addEventListener('touchstart', (e) => handleJoystick(e, false), {passive: false});
+    document.getElementById('joystickRight').addEventListener('touchmove', (e) => handleJoystick(e, false), {passive: false});
+    document.getElementById('joystickRight').addEventListener('touchend', (e) => resetJoystick(e, false), {passive: false});
 
-    function resetJoystick(e, isLeft) {
-        if (e) e.preventDefault();
-        let knob = isLeft ? document.getElementById('knobLeft') : document.getElementById('knobRight');
-        knob.style.transform = `translate(0px, 0px)`;
-        if (isLeft) { moveVector.x = 0; moveVector.y = 0; } else { aimVector.active = false; }
-    }
-
-    let joyLeft = document.getElementById('joystickLeft');
-    joyLeft.addEventListener('touchstart', (e) => handleJoystick(e, true), {passive: false});
-    joyLeft.addEventListener('touchmove', (e) => handleJoystick(e, true), {passive: false});
-    joyLeft.addEventListener('touchend', (e) => resetJoystick(e, true), {passive: false});
-
-    let joyRight = document.getElementById('joystickRight');
-    joyRight.addEventListener('touchstart', (e) => handleJoystick(e, false), {passive: false});
-    joyRight.addEventListener('touchmove', (e) => handleJoystick(e, false), {passive: false});
-    joyRight.addEventListener('touchend', (e) => resetJoystick(e, false), {passive: false});
-
-    const player = {
-        x: canvas.width / 2, y: canvas.height / 2,
-        size: 30, hitbox: 15, speed: 6, 
-        health: 100, maxHealth: 100, color: "#2ecc71", angle: 0, giantTimer: 0 
-    };
-
-    let bullets = []; let enemyBullets = []; 
-    let monsters = []; let bosses = [];
-    let bananas = []; let shields = []; let stars = []; 
+    const player = { x: canvas.width / 2, y: canvas.height / 2, size: 30, hitbox: 15, speed: 6, health: 100, maxHealth: 100, color: "#2ecc71", angle: 0, giantTimer: 0, godModeTimer: 0, lastGodShot: 0 };
+    let bullets = []; let enemyBullets = []; let monsters = []; let bosses = []; let playerPets = [];
+    
+    // NEW ITEM DROPS & INVENTORY ARRAYS
+    let bananas = []; let shields = []; let stars = []; let lightnings = []; 
+    let inventory = []; const MAX_INV = 3;
     let keys = {};
-    let playerPets = { normal: null, ultra: null, mega: null };
 
-    let lastShotTime = 0; let hasBananaBomb = false; let hasShield = false; 
-    let explosionAlpha = 0; 
-    const fps = 30; const fpsInterval = 1000 / fps; let then = performance.now();
+    let lastShotTime = 0; let isBursting = false; let burstShotsFired = 0; let lastBurstBulletTime = 0; 
+    let hasShield = false; let explosionAlpha = 0; 
+    const fpsInterval = 1000 / 30; let then = performance.now();
 
     function resetGame() {
-        document.getElementById('startScreen').style.display = 'none';
-        document.getElementById('gameOverScreen').style.display = 'none';
-        document.getElementById('winScreen').style.display = 'none';
-        
-        // Show Top HUD
-        topStatsUI.style.display = 'flex';
-        
-        round = 1;
-        player.health = player.maxHealth; player.x = canvas.width / 2; player.y = canvas.height / 2; player.giantTimer = 0;
-        playerPets = { normal: null, ultra: null, mega: null };
-        bullets = []; enemyBullets = []; monsters = []; bosses = []; bananas = []; shields = []; stars = [];
-        hasBananaBomb = false; hasShield = false; explosionAlpha = 0;
-        
-        resetJoystick(null, true); resetJoystick(null, false);
+        document.getElementById('startScreen').style.display = 'none'; document.getElementById('gameOverScreen').style.display = 'none'; document.getElementById('winScreen').style.display = 'none';
+        topStatsUI.style.display = 'flex'; inventoryBarUI.style.display = 'flex'; practiceSpawnerUI.style.display = 'none'; statBossUI.style.display = 'none';
+        round = 1; isPracticeMode = false;
+        player.health = player.maxHealth; player.x = canvas.width / 2; player.y = canvas.height / 2; player.giantTimer = 0; player.godModeTimer = 0;
+        playerPets = []; bullets = []; enemyBullets = []; monsters = []; bosses = []; bananas = []; shields = []; stars = []; lightnings = []; inventory = [];
+        hasShield = false; explosionAlpha = 0; resetJoystick(null, true); resetJoystick(null, false);
+        isBursting = false; burstShotsFired = 0; lastBurstBulletTime = 0; lastShotTime = Date.now();
         gameState = "PLAYING"; spawnMonsters();
     }
 
-    document.getElementById('btnStart').addEventListener('click', resetGame);
-    document.getElementById('btnStart').addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); }, {passive: false});
-    document.getElementById('btnRestart').addEventListener('click', resetGame);
-    document.getElementById('btnRestart').addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); }, {passive: false});
-    document.getElementById('btnPlayAgainWin').addEventListener('click', resetGame);
-    document.getElementById('btnPlayAgainWin').addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); }, {passive: false});
+    window.startPractice = function(bossType) {
+        document.getElementById('startScreen').style.display = 'none'; topStatsUI.style.display = 'flex'; inventoryBarUI.style.display = 'flex'; statBossUI.style.display = 'none';
+        practiceSpawnerUI.style.display = 'block'; 
+        isPracticeMode = true; player.health = player.maxHealth; player.x = canvas.width / 2; player.y = canvas.height / 2; player.giantTimer = 0; player.godModeTimer = 0;
+        playerPets = []; bullets = []; enemyBullets = []; monsters = []; bosses = []; bananas = []; shields = []; stars = []; lightnings = []; inventory = [];
+        hasShield = false; explosionAlpha = 0; resetJoystick(null, true); resetJoystick(null, false);
+        isBursting = false; burstShotsFired = 0; lastBurstBulletTime = 0; lastShotTime = Date.now();
+        gameState = "PLAYING"; spawnBoss(bossType);
+    };
 
-    function triggerBananaBomb() {
-        if (!hasBananaBomb || gameState !== "PLAYING") return;
-        hasBananaBomb = false;
-        monsters = []; 
-        for (let i = bosses.length - 1; i >= 0; i--) {
-            bosses[i].health -= 30; 
-            if (bosses[i].health <= 0) {
-                if (bosses[i].type === 'normal' && !playerPets.normal) spawnPet('normal', bosses[i].x, bosses[i].y);
-                if (bosses[i].type === 'ultra' && !playerPets.ultra) spawnPet('ultra', bosses[i].x, bosses[i].y);
-                if (bosses[i].type === 'mega' && !playerPets.mega) spawnPet('mega', bosses[i].x, bosses[i].y);
-                bosses.splice(i, 1);
+    ['btnStart', 'btnRestart', 'btnPlayAgainWin'].forEach(id => { document.getElementById(id).addEventListener('click', resetGame); document.getElementById(id).addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); }, {passive: false}); });
+
+    // NEW INVENTORY USE FUNCTION
+    window.useItem = function(index) {
+        if (index >= inventory.length || gameState !== "PLAYING") return;
+        let type = inventory[index];
+        inventory.splice(index, 1); // Remove from inventory
+        
+        if (type === 'banana') {
+            monsters = []; 
+            for (let i = bosses.length - 1; i >= 0; i--) {
+                bosses[i].health -= 30; 
+                if (bosses[i].health <= 0) { 
+                    let drop = bosses[i].type === 'rainbowMini' ? 'rainbowPet' : bosses[i].type;
+                    spawnPet(drop, bosses[i].x, bosses[i].y); bosses.splice(i, 1); 
+                }
             }
+            explosionAlpha = 1.0;
+        } else if (type === 'shield') {
+            hasShield = true;
+        } else if (type === 'star') {
+            player.giantTimer += 5000;
+        } else if (type === 'lightning') {
+            player.godModeTimer += 5000;
         }
-        explosionAlpha = 1.0; 
-        document.getElementById('btnBanana').style.display = 'none'; 
-    }
+    };
 
-    document.getElementById('btnBanana').addEventListener('touchstart', (e) => { e.preventDefault(); triggerBananaBomb(); }, {passive: false});
-    document.getElementById('btnBanana').addEventListener('click', triggerBananaBomb); 
-
-    window.addEventListener("keydown", (e) => {
-        keys[e.key.toLowerCase()] = true;
-        if (e.key === " " && hasBananaBomb) { e.preventDefault(); triggerBananaBomb(); } 
-        else if (e.key.startsWith("Arrow")) { e.preventDefault(); }
+    // Keyboard controls for Inventory
+    window.addEventListener("keydown", (e) => { 
+        keys[e.key.toLowerCase()] = true; 
+        if (e.key === '1') useItem(0);
+        if (e.key === '2') useItem(1);
+        if (e.key === '3') useItem(2);
+        if (e.key.startsWith("Arrow")) e.preventDefault(); 
     });
     window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
 
     function spawnMonsters() {
-        let monsterCount = round + 2; 
-        for (let i = 0; i < monsterCount; i++) {
-            let startX, startY;
-            if (Math.random() < 0.5) { startX = Math.random() < 0.5 ? -30 : canvas.width + 30; startY = Math.random() * canvas.height; } 
-            else { startX = Math.random() * canvas.width; startY = Math.random() < 0.5 ? -30 : canvas.height + 30; }
-
-            let typeChance = Math.random(); let mType = 'normal'; let mColor = "#e74c3c"; let mSpeed = 1.5 + (round * 0.05);
-            if (round >= 4) { 
-                if (typeChance > 0.8) { mType = 'laser'; mColor = "#f1c40f"; mSpeed = 1.2 + (round * 0.03); } 
-                else if (typeChance > 0.6) { mType = 'chaser'; mColor = "#00FFFF"; mSpeed = 2.8 + (round * 0.08); }
-            }
-            monsters.push({ x: startX, y: startY, size: 30, hitbox: 15, speed: mSpeed, color: mColor, angle: 0, type: mType, lastHitTime: 0, state: 'chasing', chargeStart: 0, lockedX: 0, lockedY: 0 });
+        for (let i = 0; i < round + 2; i++) {
+            let startX = Math.random() < 0.5 ? (Math.random() < 0.5 ? -30 : canvas.width + 30) : Math.random() * canvas.width;
+            let startY = startX < 0 || startX > canvas.width ? Math.random() * canvas.height : (Math.random() < 0.5 ? -30 : canvas.height + 30);
+            let mType = 'normal', mColor = "#e74c3c", mSpeed = 1.5 + (round * 0.05);
+            if (round >= 4) { let t = Math.random(); if (t > 0.8) { mType = 'laser'; mColor = "#f1c40f"; mSpeed = 1.2 + (round * 0.03); } else if (t > 0.6) { mType = 'chaser'; mColor = "#00FFFF"; mSpeed = 2.8 + (round * 0.08); } }
+            monsters.push({ x: startX, y: startY, size: 30, hitbox: 15, speed: mSpeed, color: mColor, angle: 0, type: mType, lastHitTime: 0, state: 'chasing', chargeStart: Date.now() });
         }
     }
 
     function spawnBoss(type) {
-        let startX = Math.random() < 0.5 ? -100 : canvas.width + 100; let startY = canvas.height / 2;
-        let hp, color, size;
-        if (type === 'mega') { hp = 400; color = "#e67e22"; size = 200; }
-        else if (type === 'ultra') { hp = 200; color = "#9b59b6"; size = 150; }
+        let hp = 100, color = "#f1c40f", size = 100;
+        if (type === 'rainbow') { hp = 2000; color = "rainbow"; size = 250; } 
+        else if (type === 'rainbowMini') { hp = 800; color = "rainbow"; size = 150; } 
+        else if (type === 'mega') { hp = 400; color = "#e67e22"; size = 200; } 
+        else if (type === 'ultra') { hp = 200; color = "#9b59b6"; size = 150; } 
         else if (type === 'mini') { hp = 30; color = "#3498db"; size = 60; }
-        else { hp = 100; color = "#f1c40f"; size = 100; }
-        bosses.push({ x: startX, y: startY, size: size, hitbox: size / 2, speed: 1.0 + (round * 0.02), color: color, health: hp, maxHealth: hp, angle: 0, type: type, lastShotTime: Date.now(), lastHitTime: 0 });
+        bosses.push({ x: Math.random() < 0.5 ? -100 : canvas.width + 100, y: canvas.height / 2, size: size, hitbox: size / 2, speed: 1.0 + ((isPracticeMode ? 50 : round) * 0.02), color: color, health: hp, maxHealth: hp, angle: 0, type: type, lastShotTime: Date.now(), lastHitTime: 0 });
     }
 
-    function spawnPet(type, x, y) {
-        if (type === 'normal') playerPets.normal = { x: x, y: y, size: 15, speed: 5, color: "#a2ff99", bulletColor: "#c5a059", fireRate: 500, angle: 0, lastShotTime: 0, sideOffset: -1 };
-        else if (type === 'ultra') playerPets.ultra = { x: x, y: y, size: 25, speed: 5, color: "#e056fd", bulletColor: "#e056fd", fireRate: 250, angle: 0, lastShotTime: 0, sideOffset: 1 };
-        else if (type === 'mega') playerPets.mega = { x: x, y: y, size: 35, speed: 5, color: "#e67e22", bulletColor: "#e67e22", fireRate: 250, angle: 0, lastShotTime: 0, sideOffset: 2 };
-    }
+    // POWER-UP GIVER FUNCTIONS (Adds directly to inventory)
+    window.giveBanana = function() { if(inventory.length < MAX_INV) inventory.push('banana'); };
+    window.giveShield = function() { if(inventory.length < MAX_INV) inventory.push('shield'); };
+    window.giveRampage = function() { if(inventory.length < MAX_INV) inventory.push('star'); }; 
+    window.giveGodMode = function() { if(inventory.length < MAX_INV) inventory.push('lightning'); };
 
-    function spawnItem(array) { array.push({ x: Math.random() * (canvas.width - 60) + 30, y: Math.random() * (canvas.height - 60) + 30, radius: 15 }); }
+    window.spawnPet = function(type, x, y) {
+        let pet = { x: x, y: y, angle: 0, lastShotTime: 0, type: type };
+        if (type === 'normal' || type === 'mini') { pet.size = 15; pet.speed = 5; pet.color = "#a2ff99"; pet.bulletColor = "#c5a059"; pet.fireRate = 500; }
+        else if (type === 'ultra') { pet.size = 25; pet.speed = 5; pet.color = "#e056fd"; pet.bulletColor = "#e056fd"; pet.fireRate = 250; }
+        else if (type === 'mega') { pet.size = 35; pet.speed = 5; pet.color = "#e67e22"; pet.bulletColor = "#e67e22"; pet.fireRate = 250; }
+        else if (type === 'rainbowPet' || type === 'rainbowMini') { pet.size = 40; pet.speed = 7; pet.color = "rainbow"; pet.bulletColor = "rainbow"; pet.fireRate = 120; pet.type = 'rainbowPet'; }
+        playerPets.push(pet);
+    };
+
+    function spawnItem(a) { a.push({ x: Math.random() * (canvas.width - 60) + 30, y: Math.random() * (canvas.height - 60) + 30, radius: 15 }); }
     function getDistance(x1, y1, x2, y2) { return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)); }
-    function getNearestEnemy(x, y) {
-        let nearest = null; let minDist = Infinity;
-        monsters.forEach(m => { let dist = getDistance(x, y, m.x, m.y); if (dist < minDist) { minDist = dist; nearest = m; } });
-        bosses.forEach(b => { let dist = getDistance(x, y, b.x, b.y); if (dist < minDist) { minDist = dist; nearest = b; } });
-        return nearest;
-    }
+    function getNearestEnemy(x, y) { let n = null; let min = Infinity; monsters.concat(bosses).forEach(e => { let d = getDistance(x, y, e.x, e.y); if (d < min) { min = d; n = e; } }); return n; }
 
     function drawBlob(x, y, color, angle, size) {
-        ctx.save(); ctx.translate(x, y); ctx.rotate(angle); 
-        let half = size / 2; ctx.fillStyle = color; ctx.fillRect(-half, -half, size, size);
-        let eyeSize = size / 7.5; let eyeOffset = size / 3; ctx.fillStyle = "black";
-        ctx.fillRect(half - eyeOffset, -half + eyeSize, eyeSize, eyeSize * 1.5); ctx.fillRect(half - eyeOffset, half - eyeSize * 2.5, eyeSize, eyeSize * 1.5); 
-        ctx.fillStyle = "white"; let toothWidth = size / 5; 
-        for (let i = 0; i < 5; i++) { let startY = -half + (i * toothWidth); ctx.beginPath(); ctx.moveTo(half, startY); ctx.lineTo(half + (size / 3.75), startY + toothWidth / 2); ctx.lineTo(half, startY + toothWidth); ctx.fill(); ctx.closePath(); }
+        ctx.save(); ctx.translate(x, y); ctx.rotate(angle); let h = size / 2; ctx.fillStyle = color; ctx.fillRect(-h, -h, size, size);
+        let e = size / 7.5; let eo = size / 3; ctx.fillStyle = "black"; ctx.fillRect(h - eo, -h + e, e, e * 1.5); ctx.fillRect(h - eo, h - e * 2.5, e, e * 1.5); 
+        ctx.fillStyle = "white"; let tw = size / 5; for (let i = 0; i < 5; i++) { let sy = -h + (i * tw); ctx.beginPath(); ctx.moveTo(h, sy); ctx.lineTo(h + (size / 3.75), sy + tw / 2); ctx.lineTo(h, sy + tw); ctx.fill(); ctx.closePath(); }
         ctx.restore();
     }
 
-    function triggerGameOver() {
-        gameState = "GAMEOVER";
-        document.getElementById('roundDisplay').innerText = "You survived to Round " + round;
-        document.getElementById('gameOverScreen').style.display = 'flex';
-        document.getElementById('btnBanana').style.display = 'none'; 
-    }
-
-    function triggerWin() {
-        gameState = "WIN";
-        document.getElementById('winScreen').style.display = 'flex';
-        document.getElementById('btnBanana').style.display = 'none';
-    }
+    function triggerGameOver() { gameState = "GAMEOVER"; document.getElementById('roundDisplay').innerText = isPracticeMode ? "Practice Failed!" : "You survived to Round " + round; document.getElementById('gameOverScreen').style.display = 'flex'; practiceSpawnerUI.style.display = 'none'; inventoryBarUI.style.display = 'none'; }
+    function triggerWin() { gameState = "WIN"; document.getElementById('winScreen').style.display = 'flex'; document.getElementById('winSubtitle').innerText = isPracticeMode ? "Practice Boss Defeated!" : "You won a cookie! 🍪"; practiceSpawnerUI.style.display = 'none'; inventoryBarUI.style.display = 'none';}
 
     function update(elapsedTime) {
-        if (gameState !== "PLAYING") return;
-
-        const now = Date.now();
+        if (gameState !== "PLAYING") return; const now = Date.now();
         
-        // Update DOM HUD elements
-        document.getElementById('btnBanana').style.display = hasBananaBomb ? 'block' : 'none';
-        roundTextUI.innerText = `Round: ${round} / ${maxRounds}`;
+        // UPDATE INVENTORY UI
+        for (let i = 0; i < 3; i++) {
+            let slot = document.getElementById('slot' + i);
+            if (inventory[i]) {
+                slot.className = 'inv-slot filled';
+                if (inventory[i] === 'banana') slot.innerText = '🍌';
+                if (inventory[i] === 'shield') slot.innerText = '🛡️';
+                if (inventory[i] === 'star') slot.innerText = '⭐';
+                if (inventory[i] === 'lightning') slot.innerText = '⚡';
+            } else {
+                slot.className = 'inv-slot';
+                slot.innerText = '';
+            }
+        }
+
+        roundTextUI.innerText = isPracticeMode ? 'PRACTICE MODE' : `Round: ${round} / ${maxRounds}`; 
         hpFillUI.style.width = Math.max(0, (player.health / player.maxHealth) * 100) + '%';
         
-        if (bosses.length > 0) {
-            statBossUI.style.display = 'flex';
-            bossFillUI.style.backgroundColor = bosses[0].color;
-            bossFillUI.style.width = Math.max(0, (bosses[0].health / bosses[0].maxHealth) * 100) + '%';
+        if (bosses.length > 0) { 
+            statBossUI.style.display = 'flex'; 
+            bossFillUI.style.background = (bosses[0].color === "rainbow") ? "linear-gradient(90deg, red, orange, yellow, green, blue, purple)" : bosses[0].color; 
+            bossFillUI.style.width = Math.max(0, (bosses[0].health / bosses[0].maxHealth) * 100) + '%'; 
         } else {
             statBossUI.style.display = 'none';
         }
 
-        if (player.giantTimer > 0) { player.giantTimer -= elapsedTime; }
-        let isGiant = player.giantTimer > 0;
+        if (player.giantTimer > 0) player.giantTimer -= elapsedTime; 
+        if (player.godModeTimer > 0) player.godModeTimer -= elapsedTime;
         
-        if (isGiant) { statusTextUI.innerText = "RAMPAGE!"; statusTextUI.style.color = "#ff00ff"; } 
-        else if (hasShield) { statusTextUI.innerText = "SHIELD ACTIVE"; statusTextUI.style.color = "#00FFFF"; } 
-        else { statusTextUI.innerText = ""; }
-
-        let currentSize = isGiant ? player.size * 2 : player.size; let currentHitbox = isGiant ? player.hitbox * 2 : player.hitbox;
-
-        if (isUsingMouse) player.angle = Math.atan2(mouseY - player.y, mouseX - player.x);
-        else if (aimVector.active) player.angle = Math.atan2(aimVector.y, aimVector.x);
-
-        if (now - lastShotTime >= 300) {
-            bullets.push({ x: player.x, y: player.y, hitbox: isGiant ? 12 : 6, speed: 10, dx: Math.cos(player.angle) * 10, dy: Math.sin(player.angle) * 10, angle: player.angle, color: "#c5a059" });
-            lastShotTime = now;
+        let isGiant = player.giantTimer > 0;
+        let isGodMode = player.godModeTimer > 0;
+        
+        if (isGodMode) { statusTextUI.innerText = "GOD MODE ACTIVE!"; statusTextUI.style.color = "#ffffff"; }
+        else if (isGiant) { statusTextUI.innerText = "RAMPAGE!"; statusTextUI.style.color = "#ff00ff"; }
+        else { statusTextUI.innerText = hasShield ? "SHIELD ACTIVE" : ""; statusTextUI.style.color = "#00FFFF"; }
+        
+        let cHitbox = isGiant ? player.hitbox * 2 : player.hitbox;
+        if (isUsingMouse) player.angle = Math.atan2(mouseY - player.y, mouseX - player.x); else if (aimVector.active) player.angle = Math.atan2(aimVector.y, aimVector.x);
+        
+        // NORMAL BURST FIRE
+        if (!isBursting && now - lastShotTime >= 600) {
+            isBursting = true; burstShotsFired = 0; lastBurstBulletTime = 0;
+        }
+        if (isBursting && now - lastBurstBulletTime >= 80) { 
+            bullets.push({ x: player.x, y: player.y, hitbox: isGiant ? 12 : 6, dx: Math.cos(player.angle) * 12, dy: Math.sin(player.angle) * 12, angle: player.angle, color: "#c5a059" }); 
+            burstShotsFired++; lastBurstBulletTime = now;
+            if (burstShotsFired >= 4) { isBursting = false; lastShotTime = now; }
         }
 
-        let activePets = []; if (playerPets.normal) activePets.push(playerPets.normal); if (playerPets.ultra) activePets.push(playerPets.ultra); if (playerPets.mega) activePets.push(playerPets.mega);
-        activePets.forEach(pet => {
-            let formationDist = (isGiant ? 80 : 50) + (pet.size / 2); 
-            let targetX = player.x + Math.cos(player.angle + (Math.PI / 2 * pet.sideOffset)) * formationDist; let targetY = player.y + Math.sin(player.angle + (Math.PI / 2 * pet.sideOffset)) * formationDist;
-            let distToTarget = getDistance(pet.x, pet.y, targetX, targetY);
-            if (distToTarget > 5) { let moveAngle = Math.atan2(targetY - pet.y, targetX - pet.x); pet.x += Math.cos(moveAngle) * pet.speed; pet.y += Math.sin(moveAngle) * pet.speed; }
+        // 8-WAY GOD MODE LASERS
+        if (isGodMode && now - player.lastGodShot >= 150) { 
+            for (let i = 0; i < 8; i++) {
+                let angle = i * (Math.PI / 4); 
+                bullets.push({ x: player.x, y: player.y, hitbox: 15, dx: Math.cos(angle) * 20, dy: Math.sin(angle) * 20, angle: angle, color: "#ffffff" });
+            }
+            player.lastGodShot = now;
+        }
 
-            let targetEnemy = getNearestEnemy(pet.x, pet.y);
-            if (targetEnemy && getDistance(pet.x, pet.y, targetEnemy.x, targetEnemy.y) < 400) {
-                pet.angle = Math.atan2(targetEnemy.y - pet.y, targetEnemy.x - pet.x);
+        playerPets.forEach((pet, index) => {
+            let orbitLayer = Math.floor(index / 8) + 1; 
+            let radius = (isGiant ? 80 : 50) + (orbitLayer * 30);
+            let angleOffset = (now / 1000) + (index * (Math.PI * 2 / 8)); 
+            let tx = player.x + Math.cos(angleOffset) * radius, ty = player.y + Math.sin(angleOffset) * radius;
+            if (getDistance(pet.x, pet.y, tx, ty) > 5) { let ma = Math.atan2(ty - pet.y, tx - pet.x); pet.x += Math.cos(ma)*pet.speed; pet.y += Math.sin(ma)*pet.speed; }
+            let te = getNearestEnemy(pet.x, pet.y);
+            if (te && getDistance(pet.x, pet.y, te.x, te.y) < 400) {
+                pet.angle = Math.atan2(te.y - pet.y, te.x - pet.x);
                 if (now - pet.lastShotTime >= pet.fireRate) {
-                    if (pet === playerPets.mega) {
-                        let angle1 = pet.angle - 0.15; let angle2 = pet.angle + 0.15;
-                        bullets.push({ x: pet.x, y: pet.y, hitbox: 6, dx: Math.cos(angle1)*10, dy: Math.sin(angle1)*10, angle: angle1, color: pet.bulletColor });
-                        bullets.push({ x: pet.x, y: pet.y, hitbox: 6, dx: Math.cos(angle2)*10, dy: Math.sin(angle2)*10, angle: angle2, color: pet.bulletColor });
-                    } else { bullets.push({ x: pet.x, y: pet.y, hitbox: 6, dx: Math.cos(pet.angle)*10, dy: Math.sin(pet.angle)*10, angle: pet.angle, color: pet.bulletColor }); }
+                    if (pet.type === 'mega') { bullets.push({x:pet.x, y:pet.y, hitbox:6, dx:Math.cos(pet.angle-0.15)*10, dy:Math.sin(pet.angle-0.15)*10, angle:pet.angle-0.15, color:pet.bulletColor}); bullets.push({x:pet.x, y:pet.y, hitbox:6, dx:Math.cos(pet.angle+0.15)*10, dy:Math.sin(pet.angle+0.15)*10, angle:pet.angle+0.15, color:pet.bulletColor}); } 
+                    else bullets.push({x:pet.x, y:pet.y, hitbox:6, dx:Math.cos(pet.angle)*10, dy:Math.sin(pet.angle)*10, angle:pet.angle, color:pet.bulletColor});
                     pet.lastShotTime = now;
                 }
-            } else { pet.angle = player.angle; }
+            } else pet.angle = player.angle;
         });
 
-        let pSpeed = isGiant ? player.speed * 1.5 : player.speed; 
-        let nextX = player.x + (moveVector.x * pSpeed); let nextY = player.y + (moveVector.y * pSpeed);
-        if (keys["w"] || keys["arrowup"]) nextY -= pSpeed; if (keys["s"] || keys["arrowdown"]) nextY += pSpeed;
-        if (keys["a"] || keys["arrowleft"]) nextX -= pSpeed; if (keys["d"] || keys["arrowright"]) nextX += pSpeed;
-        if (nextX - currentHitbox > 0 && nextX + currentHitbox < canvas.width) player.x = nextX;
-        if (nextY - currentHitbox > 0 && nextY + currentHitbox < canvas.height) player.y = nextY;
+        let ps = isGiant ? player.speed * 1.5 : player.speed; let nx = player.x + (moveVector.x * ps); let ny = player.y + (moveVector.y * ps);
+        if (keys["w"] || keys["arrowup"]) ny -= ps; if (keys["s"] || keys["arrowdown"]) ny += ps; if (keys["a"] || keys["arrowleft"]) nx -= ps; if (keys["d"] || keys["arrowright"]) nx += ps;
+        if (nx - cHitbox > 0 && nx + cHitbox < canvas.width) player.x = nx; if (ny - cHitbox > 0 && ny + cHitbox < canvas.height) player.y = ny;
 
-        for (let i = bananas.length - 1; i >= 0; i--) { if (getDistance(player.x, player.y, bananas[i].x, bananas[i].y) < currentHitbox + bananas[i].radius) { hasBananaBomb = true; bananas.splice(i, 1); } }
-        for (let i = shields.length - 1; i >= 0; i--) { if (getDistance(player.x, player.y, shields[i].x, shields[i].y) < currentHitbox + shields[i].radius) { hasShield = true; shields.splice(i, 1); } }
-        for (let i = stars.length - 1; i >= 0; i--) { if (getDistance(player.x, player.y, stars[i].x, stars[i].y) < currentHitbox + stars[i].radius) { player.giantTimer = 5000; stars.splice(i, 1); } }
+        // PICK UP ITEMS INTO INVENTORY (Only if there is space!)
+        for (let i = bananas.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, bananas[i].x, bananas[i].y) < cHitbox + bananas[i].radius) { if(inventory.length < MAX_INV) { inventory.push('banana'); bananas.splice(i, 1); } }
+        for (let i = shields.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, shields[i].x, shields[i].y) < cHitbox + shields[i].radius) { if(inventory.length < MAX_INV) { inventory.push('shield'); shields.splice(i, 1); } }
+        for (let i = stars.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, stars[i].x, stars[i].y) < cHitbox + stars[i].radius) { if(inventory.length < MAX_INV) { inventory.push('star'); stars.splice(i, 1); } }
+        for (let i = lightnings.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, lightnings[i].x, lightnings[i].y) < cHitbox + lightnings[i].radius) { if(inventory.length < MAX_INV) { inventory.push('lightning'); lightnings.splice(i, 1); } }
 
-        for (let i = bullets.length - 1; i >= 0; i--) {
-            let b = bullets[i]; b.x += b.dx; b.y += b.dy;
-            if (b.x < -20 || b.x > canvas.width + 20 || b.y < -20 || b.y > canvas.height + 20) bullets.splice(i, 1);
-        }
-        for (let i = enemyBullets.length - 1; i >= 0; i--) {
-            let bb = enemyBullets[i]; bb.x += bb.dx; bb.y += bb.dy;
-            if (getDistance(player.x, player.y, bb.x, bb.y) < currentHitbox + bb.radius) {
-                if (!isGiant) { if (hasShield) hasShield = false; else { player.health -= 15; if (player.health <= 0) triggerGameOver(); } }
-                enemyBullets.splice(i, 1); continue;
-            }
-            if (bb.x < -20 || bb.x > canvas.width + 20 || bb.y < -20 || bb.y > canvas.height + 20) enemyBullets.splice(i, 1);
-        }
+        for (let i = bullets.length - 1; i >= 0; i--) { let b = bullets[i]; b.x += b.dx; b.y += b.dy; if (b.x < -20 || b.x > canvas.width + 20 || b.y < -20 || b.y > canvas.height + 20) bullets.splice(i, 1); }
+        for (let i = enemyBullets.length - 1; i >= 0; i--) { let bb = enemyBullets[i]; bb.x += bb.dx; bb.y += bb.dy; if (getDistance(player.x, player.y, bb.x, bb.y) < cHitbox + bb.radius) { if (!isGiant && !isGodMode) { if (hasShield) hasShield = false; else { player.health -= 15; if (player.health <= 0) triggerGameOver(); } } enemyBullets.splice(i, 1); continue; } if (bb.x < -20 || bb.x > canvas.width + 20 || bb.y < -20 || bb.y > canvas.height + 20) enemyBullets.splice(i, 1); }
 
         for (let i = bosses.length - 1; i >= 0; i--) {
             let boss = bosses[i]; boss.angle = Math.atan2(player.y - boss.y, player.x - boss.x); boss.x += Math.cos(boss.angle) * boss.speed; boss.y += Math.sin(boss.angle) * boss.speed;
-            if ((boss.type === 'normal' || boss.type === 'ultra' || boss.type === 'mega') && now - boss.lastShotTime >= 4000) { enemyBullets.push({ x: boss.x, y: boss.y, radius: 12, speed: 6, dx: Math.cos(boss.angle) * 6, dy: Math.sin(boss.angle) * 6, color: boss.color }); boss.lastShotTime = now; }
-
-            if (getDistance(player.x, player.y, boss.x, boss.y) < currentHitbox + boss.hitbox) {
-                if (isGiant) { boss.health = 0; } 
-                else if (now - boss.lastHitTime >= 1000) {
-                    if (hasShield) hasShield = false; else player.health -= 20; if (player.health <= 0) triggerGameOver();
-                    boss.lastHitTime = now; let knockbackAngle = Math.atan2(boss.y - player.y, boss.x - player.x);
-                    boss.x += Math.cos(knockbackAngle) * 80; boss.y += Math.sin(knockbackAngle) * 80;
-                }
+            if (now - boss.lastShotTime >= (boss.type.includes('rainbow') ? 2000 : 4000)) { enemyBullets.push({ x: boss.x, y: boss.y, radius: 12, dx: Math.cos(boss.angle) * 6, dy: Math.sin(boss.angle) * 6, color: boss.color === "rainbow" ? "purple" : boss.color }); boss.lastShotTime = now; }
+            if (getDistance(player.x, player.y, boss.x, boss.y) < cHitbox + boss.hitbox) { if (isGiant || isGodMode) boss.health = 0; else if (now - boss.lastHitTime >= 1000) { if (hasShield) hasShield = false; else player.health -= 20; if (player.health <= 0) triggerGameOver(); boss.lastHitTime = now; let ka = Math.atan2(boss.y - player.y, boss.x - player.x); boss.x += Math.cos(ka) * 80; boss.y += Math.sin(ka) * 80; } }
+            
+            for (let j = bullets.length - 1; j >= 0; j--) { 
+                let b = bullets[j]; 
+                if (getDistance(boss.x, boss.y, b.x, b.y) < boss.hitbox + b.hitbox) { 
+                    boss.health -= (b.color === "#ffffff" ? 75 : (b.hitbox > 6 ? 3 : 1)); 
+                    bullets.splice(j, 1); 
+                    break; 
+                } 
             }
-
-            for (let j = bullets.length - 1; j >= 0; j--) { let b = bullets[j]; if (getDistance(boss.x, boss.y, b.x, b.y) < boss.hitbox + b.hitbox) { boss.health -= (b.hitbox > 6 ? 3 : 1); bullets.splice(j, 1); break; } }
-            if (boss.health <= 0) {
-                if (boss.type === 'normal' && !playerPets.normal) spawnPet('normal', boss.x, boss.y);
-                if (boss.type === 'ultra' && !playerPets.ultra) spawnPet('ultra', boss.x, boss.y);
-                if (boss.type === 'mega' && !playerPets.mega) spawnPet('mega', boss.x, boss.y);
-                bosses.splice(i, 1);
-            }
+            
+            if (boss.health <= 0) { 
+                let drop = boss.type; if (drop === 'rainbowMini') drop = 'rainbowPet';
+                spawnPet(drop, boss.x, boss.y); bosses.splice(i, 1); 
+            } 
         }
 
         for (let i = monsters.length - 1; i >= 0; i--) {
             let m = monsters[i];
-            if (m.type === 'laser') {
-                if (m.state === 'chasing') { m.angle = Math.atan2(player.y - m.y, player.x - m.x); m.x += Math.cos(m.angle) * m.speed; m.y += Math.sin(m.angle) * m.speed; if (now - m.chargeStart > 6000) { m.state = 'charging'; m.chargeStart = now; m.lockedX = player.x; m.lockedY = player.y; } } 
-                else if (m.state === 'charging') { m.angle = Math.atan2(m.lockedY - m.y, m.lockedX - m.x); if (now - m.chargeStart >= 5000) { enemyBullets.push({ x: m.x, y: m.y, radius: 8, speed: 12, dx: Math.cos(m.angle) * 12, dy: Math.sin(m.angle) * 12, color: "red" }); m.state = 'chasing'; m.chargeStart = now; } }
-            } else { m.angle = Math.atan2(player.y - m.y, player.x - m.x); m.x += Math.cos(m.angle) * m.speed; m.y += Math.sin(m.angle) * m.speed; }
-
-            if (getDistance(player.x, player.y, m.x, m.y) < currentHitbox + m.hitbox) {
-                if (isGiant) { m.health = 0; } 
-                else if (now - m.lastHitTime >= 1000) { 
-                    if (hasShield) hasShield = false; else player.health -= 10; if (player.health <= 0) triggerGameOver();
-                    m.lastHitTime = now; let knockbackAngle = Math.atan2(m.y - player.y, m.x - player.x); m.x += Math.cos(knockbackAngle) * 60; m.y += Math.sin(knockbackAngle) * 60;
-                }
-            }
-
-            let bulletHit = false;
-            for (let j = bullets.length - 1; j >= 0; j--) { let b = bullets[j]; if (getDistance(m.x, m.y, b.x, b.y) < m.hitbox + b.hitbox) { bulletHit = true; bullets.splice(j, 1); break; } }
-            if (bulletHit || m.health === 0) monsters.splice(i, 1);
+            if (m.type === 'laser') { 
+                if (m.state === 'chasing') { 
+                    m.angle = Math.atan2(player.y - m.y, player.x - m.x); m.x += Math.cos(m.angle)*m.speed; m.y += Math.sin(m.angle)*m.speed; 
+                    if (now - m.chargeStart > 2500) { m.state = 'charging'; m.chargeStart = now; m.lockedX = player.x; m.lockedY = player.y; } 
+                } else if (m.state === 'charging') { 
+                    m.angle = Math.atan2(m.lockedY - m.y, m.lockedX - m.x); 
+                    if (now - m.chargeStart >= 1200) { enemyBullets.push({ x: m.x, y: m.y, radius: 8, dx: Math.cos(m.angle) * 14, dy: Math.sin(m.angle) * 14, color: "red" }); m.state = 'chasing'; m.chargeStart = now; } 
+                } 
+            } else { m.angle = Math.atan2(player.y - m.y, player.x - m.x); m.x += Math.cos(m.angle)*m.speed; m.y += Math.sin(m.angle)*m.speed; }
+            if (getDistance(player.x, player.y, m.x, m.y) < cHitbox + m.hitbox) { if (isGiant || isGodMode) m.health = 0; else if (now - m.lastHitTime >= 1000) { if (hasShield) hasShield = false; else player.health -= 10; if (player.health <= 0) triggerGameOver(); m.lastHitTime = now; let ka = Math.atan2(m.y - player.y, m.x - player.x); m.x += Math.cos(ka)*60; m.y += Math.sin(ka)*60; } }
+            let bh = false; for (let j = bullets.length - 1; j >= 0; j--) { let b = bullets[j]; if (getDistance(m.x, m.y, b.x, b.y) < m.hitbox + b.hitbox) { bh = true; bullets.splice(j, 1); break; } }
+            if (bh || m.health === 0) monsters.splice(i, 1);
         }
 
         if (monsters.length === 0 && bosses.length === 0) {
-            if (round >= maxRounds) { triggerWin(); } 
-            else {
-                round++;
-                if (round % 30 === 0) spawnBoss('mega'); else if (round % 20 === 0) spawnBoss('ultra'); else if (round % 10 === 0) spawnBoss('normal'); else if (round % 5 === 0) spawnBoss('mini'); else spawnMonsters();
+            if (isPracticeMode) triggerWin(); 
+            else if (round === maxRounds - 1) { round++; spawnBoss('rainbow'); } 
+            else if (round >= maxRounds) triggerWin(); 
+            else { 
+                round++; 
+                if (round === 50) spawnBoss('rainbowMini'); 
+                else if (round % 30 === 0) spawnBoss('mega'); 
+                else if (round % 20 === 0) spawnBoss('ultra'); 
+                else if (round % 10 === 0) spawnBoss('normal'); 
+                else if (round % 5 === 0) spawnBoss('mini'); 
+                else spawnMonsters(); 
+                
+                // Drop God Mode Lightning Item every 20 rounds!
+                if (round % 20 === 0) spawnItem(lightnings);
+
                 if (round % 3 === 0) spawnItem(bananas); if (round % 5 === 0) spawnItem(shields); if (round % 11 === 0) spawnItem(stars); 
             }
         }
     }
 
     function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        let isGiant = player.giantTimer > 0; let currentSize = isGiant ? player.size * 2 : player.size;
-        
+        ctx.clearRect(0, 0, canvas.width, canvas.height); let isGiant = player.giantTimer > 0; let isGodMode = player.godModeTimer > 0;
         if (explosionAlpha > 0) { ctx.fillStyle = `rgba(255, 255, 100, ${explosionAlpha})`; ctx.fillRect(0, 0, canvas.width, canvas.height); explosionAlpha -= 0.03; }
+        
+        // DRAW ITEMS ON GROUND
+        bananas.forEach(b => { let p = Math.abs(Math.sin(Date.now()/150))*15; let g = ctx.createRadialGradient(b.x, b.y, 5, b.x, b.y, b.radius+p); g.addColorStop(0, "rgba(255,0,0,0.6)"); g.addColorStop(1, "rgba(0,0,255,0)"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, b.radius+p, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(b.x, b.y-5, 10, 0, Math.PI); ctx.stroke(); });
+        shields.forEach(s => { let p = Math.abs(Math.sin(Date.now()/200))*5; ctx.fillStyle = "#00FFFF"; ctx.beginPath(); ctx.moveTo(s.x, s.y-s.radius-p); ctx.lineTo(s.x+s.radius+p, s.y); ctx.lineTo(s.x, s.y+s.radius+p); ctx.lineTo(s.x-s.radius-p, s.y); ctx.fill(); ctx.closePath(); ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke(); });
+        stars.forEach(s => { let p = Math.abs(Math.sin(Date.now()/100))*8; ctx.fillStyle = "#ff00ff"; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius+p, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = "white"; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius/2, 0, Math.PI*2); ctx.fill(); });
+        
+        // DRAW LIGHTNING DROPS
+        lightnings.forEach(l => { 
+            let p = Math.abs(Math.sin(Date.now()/50))*10; 
+            ctx.fillStyle = "#00FFFF"; ctx.beginPath(); ctx.arc(l.x, l.y, l.radius+p, 0, Math.PI*2); ctx.fill(); 
+            ctx.fillStyle = "#FFFFFF"; ctx.beginPath(); ctx.arc(l.x, l.y, l.radius/2, 0, Math.PI*2); ctx.fill(); 
+        });
 
-        bananas.forEach(b => { let pulse = Math.abs(Math.sin(Date.now() / 150)) * 15; let grad = ctx.createRadialGradient(b.x, b.y, 5, b.x, b.y, b.radius + pulse); grad.addColorStop(0, "rgba(255, 0, 0, 0.6)"); grad.addColorStop(0.3, "rgba(255, 165, 0, 0.4)"); grad.addColorStop(0.6, "rgba(0, 255, 0, 0.2)"); grad.addColorStop(1, "rgba(0, 0, 255, 0)"); ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(b.x, b.y, b.radius + pulse, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(b.x, b.y - 5, 10, 0, Math.PI); ctx.stroke(); });
-        shields.forEach(s => { let pulse = Math.abs(Math.sin(Date.now() / 200)) * 5; ctx.fillStyle = "#00FFFF"; ctx.beginPath(); ctx.moveTo(s.x, s.y - s.radius - pulse); ctx.lineTo(s.x + s.radius + pulse, s.y); ctx.lineTo(s.x, s.y + s.radius + pulse); ctx.lineTo(s.x - s.radius - pulse, s.y); ctx.fill(); ctx.closePath(); ctx.strokeStyle = "white"; ctx.lineWidth = 2; ctx.stroke(); });
-        stars.forEach(s => { let pulse = Math.abs(Math.sin(Date.now() / 100)) * 8; ctx.fillStyle = "#ff00ff"; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius + pulse, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = "white"; ctx.beginPath(); ctx.arc(s.x, s.y, s.radius / 2, 0, Math.PI * 2); ctx.fill(); });
-
-        if (hasShield && !isGiant) { ctx.beginPath(); ctx.arc(player.x, player.y, player.size + 10, 0, Math.PI * 2); ctx.fillStyle = "rgba(0, 255, 255, 0.3)"; ctx.fill(); ctx.strokeStyle = "#00FFFF"; ctx.lineWidth = 3; ctx.stroke(); ctx.closePath(); }
-
-        let playerDrawColor = player.color; if (isGiant) playerDrawColor = (Date.now() % 200 > 100) ? "#f1c40f" : "#ffffff"; 
-        drawBlob(player.x, player.y, playerDrawColor, player.angle, currentSize);
-        if (playerPets.normal) drawBlob(playerPets.normal.x, playerPets.normal.y, playerPets.normal.color, playerPets.normal.angle, playerPets.normal.size);
-        if (playerPets.ultra) drawBlob(playerPets.ultra.x, playerPets.ultra.y, playerPets.ultra.color, playerPets.ultra.angle, playerPets.ultra.size);
-        if (playerPets.mega) drawBlob(playerPets.mega.x, playerPets.mega.y, playerPets.mega.color, playerPets.mega.angle, playerPets.mega.size);
+        if (hasShield && !isGiant && !isGodMode) { ctx.beginPath(); ctx.arc(player.x, player.y, player.size+10, 0, Math.PI*2); ctx.fillStyle = "rgba(0,255,255,0.3)"; ctx.fill(); ctx.strokeStyle = "#00FFFF"; ctx.lineWidth = 3; ctx.stroke(); ctx.closePath(); }
+        
+        let playerDrawColor = player.color;
+        if (isGodMode) playerDrawColor = (Date.now()%100>50) ? "#ffffff" : "#00FFFF";
+        else if (isGiant) playerDrawColor = (Date.now()%200>100) ? "#f1c40f" : "#ffffff";
+        
+        drawBlob(player.x, player.y, playerDrawColor, player.angle, isGiant ? player.size*2 : player.size);
+        
+        playerPets.forEach(p => {
+            let petColor = p.color === "rainbow" ? `hsl(${(Date.now()/10)%360}, 100%, 50%)` : p.color;
+            drawBlob(p.x, p.y, petColor, p.angle, p.size);
+        });
 
         monsters.forEach(m => {
             let drawColor = m.color;
-            if (m.type === 'laser' && m.state === 'charging') { drawColor = (Date.now() % 200 > 100) ? "#ff0000" : m.color; ctx.strokeStyle = "rgba(255, 0, 0, 0.3)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.lockedX, m.lockedY); ctx.stroke(); }
+            if (m.type === 'laser' && m.state === 'charging') { 
+                drawColor = (Date.now()%200>100) ? "#ff0000" : m.color; 
+                ctx.strokeStyle = "rgba(255, 0, 0, 0.4)"; ctx.lineWidth = 3; 
+                ctx.beginPath(); ctx.moveTo(m.x, m.y); ctx.lineTo(m.lockedX, m.lockedY); ctx.stroke(); 
+            }
             drawBlob(m.x, m.y, drawColor, m.angle, m.size);
         });
 
-        bosses.forEach(boss => drawBlob(boss.x, boss.y, boss.color, boss.angle, boss.size));
-
-        bullets.forEach(b => { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.angle); ctx.fillStyle = b.color; let bw = b.hitbox > 6 ? 16 : 10; let bh = b.hitbox > 6 ? 12 : 8; ctx.fillRect(-bw/2, -bh/2, bw, bh); ctx.fillStyle = "#888"; ctx.beginPath(); ctx.moveTo(bw/2-3, -bh/2); ctx.lineTo(bw/2+3, -bh/4); ctx.lineTo(bw/2+3, bh/4); ctx.lineTo(bw/2-3, bh/2); ctx.fill(); ctx.closePath(); ctx.restore(); });
-        enemyBullets.forEach(bb => { ctx.fillStyle = bb.color; ctx.beginPath(); ctx.arc(bb.x, bb.y, bb.radius, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = "red"; ctx.lineWidth = 2; ctx.stroke(); });
-    }
-
-    function gameLoop(currentTime) {
-        requestAnimationFrame(gameLoop);
-        if (!currentTime) currentTime = performance.now(); let elapsed = currentTime - then;
-        if (elapsed > fpsInterval) { 
-            then = currentTime - (elapsed % fpsInterval); 
-            update(elapsed); 
-            draw(); 
-        }
-    }
-
-    gameLoop();
-
-</script>
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker registered!'))
-                .catch(err => console.log('Service Worker failed.', err));
+        bosses.forEach(b => drawBlob(b.x, b.y, b.color === "rainbow" ? `hsl(${(Date.now()/10)%360}, 100%, 50%)` : b.color, b.angle, b.size));
+        
+        bullets.forEach(b => { 
+            ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.angle); 
+            ctx.fillStyle = b.color === "rainbow" ? `hsl(${(Date.now()/5)%360}, 100%, 50%)` : b.color; 
+            let bw = b.hitbox>6?16:10, bh = b.hitbox>6?12:8; 
+            if (b.color === "#ffffff") { bw = 30; bh = 6; } // God Lasers
+            ctx.fillRect(-bw/2, -bh/2, bw, bh); ctx.fillStyle = "#888"; ctx.beginPath(); ctx.moveTo(bw/2-3, -bh/2); ctx.lineTo(bw/2+3, -bh/4); ctx.lineTo(bw/2+3, bh/4); ctx.lineTo(bw/2-3, bh/2); ctx.fill(); ctx.closePath(); ctx.restore(); 
         });
+        enemyBullets.forEach(bb => { ctx.fillStyle = bb.color; ctx.beginPath(); ctx.arc(bb.x, bb.y, bb.radius, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = "red"; ctx.lineWidth = 2; ctx.stroke(); });
     }
+
+    function gameLoop(t) { requestAnimationFrame(gameLoop); if(!t) t = performance.now(); let e = t - then; if(e > fpsInterval) { then = t - (e % fpsInterval); update(e); draw(); } }
+    gameLoop();
 </script>
 </body>
 </html>
