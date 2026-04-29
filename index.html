@@ -5,7 +5,7 @@
     <meta name="theme-color" content="#e74c3c">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>100 Rounds - Mobile UX Update</title>
+    <title>100 Rounds - Heal & Tip Update</title>
     <style>
         body { margin: 0; padding: 0; background-color: #000; color: white; font-family: sans-serif; overflow: hidden; touch-action: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; }
         #ui { text-align: center; background: #222; padding: 5px 0; font-size: 14px; flex-shrink: 0; border-bottom: 2px solid #333; z-index: 10; }
@@ -69,6 +69,7 @@
                 <button onclick="giveShield()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #00FFFF; color: black; border-color: white;">🛡️ Give Shield</button>
                 <button onclick="giveRampage()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #ff00ff; border-color: white;">⭐ Give Rampage</button>
                 <button onclick="giveGodMode()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #ffffff; color: #000; border-color: #00FFFF;">⚡ Give God Lasers</button>
+                <button onclick="giveHeal()" class="menu-btn" style="padding: 8px; font-size: 14px; background: #ff4757; color: white; border-color: white;">💖 Give Heal</button>
             </div>
         </div>
     </div>
@@ -121,11 +122,13 @@
             <div class="menu-title">CHOMPED!</div>
             <div class="menu-subtitle" id="roundDisplay">You survived to Round 1</div>
             <button id="btnRestart" class="menu-btn">PLAY AGAIN</button>
+            <button onclick="tipDevelopers()" class="menu-btn" style="background: #ff6b81; border-color: #ff4757; font-size: 16px; margin-top: 15px; padding: 10px 20px;">💖 Tip the Developers</button>
         </div>
         <div id="winScreen" class="menu-overlay">
             <div class="menu-title" style="color: #f1c40f;">Awesome Job!</div>
             <div class="menu-subtitle" id="winSubtitle">You won a cookie! 🍪</div>
             <button id="btnPlayAgainWin" class="menu-btn">PLAY AGAIN</button>
+            <button onclick="tipDevelopers()" class="menu-btn" style="background: #ff6b81; border-color: #ff4757; font-size: 16px; margin-top: 15px; padding: 10px 20px;">💖 Tip the Developers</button>
         </div>
     </div>
 
@@ -170,7 +173,8 @@
     const player = { x: canvas.width / 2, y: canvas.height / 2, size: 30, hitbox: 15, speed: 6, health: 100, maxHealth: 100, color: "#2ecc71", angle: 0, giantTimer: 0, godModeTimer: 0, lastGodShot: 0 };
     let bullets = []; let enemyBullets = []; let monsters = []; let bosses = []; let playerPets = [];
     
-    let bananas = []; let shields = []; let stars = []; let lightnings = []; 
+    // ARRAYS INCLUDING NEW HEALS
+    let bananas = []; let shields = []; let stars = []; let lightnings = []; let heals = []; 
     let inventory = []; const MAX_INV = 3;
     let keys = {};
 
@@ -186,12 +190,18 @@
         document.getElementById('toggleSpawnerBtn').innerText = spawnerVisible ? '🛠️ Hide Tools' : '🛠️ Show Tools';
     };
 
+    // TIP BUTTON FUNCTION
+    window.tipDevelopers = function() {
+        // You can change this alert to open a link later! e.g., window.open('https://ko-fi.com/yourname', '_blank');
+        alert("Thank you so much for playing! 💖\n\n(Developers: You can replace this alert with a link to your PayPal, CashApp, or Ko-Fi in the code later!)");
+    };
+
     function resetGame() {
         document.getElementById('startScreen').style.display = 'none'; document.getElementById('gameOverScreen').style.display = 'none'; document.getElementById('winScreen').style.display = 'none';
         topStatsUI.style.display = 'flex'; inventoryBarUI.style.display = 'flex'; practiceSpawnerUI.style.display = 'none'; statBossUI.style.display = 'none';
         round = 1; isPracticeMode = false;
         player.health = player.maxHealth; player.x = canvas.width / 2; player.y = canvas.height / 2; player.giantTimer = 0; player.godModeTimer = 0;
-        playerPets = []; bullets = []; enemyBullets = []; monsters = []; bosses = []; bananas = []; shields = []; stars = []; lightnings = []; inventory = [];
+        playerPets = []; bullets = []; enemyBullets = []; monsters = []; bosses = []; bananas = []; shields = []; stars = []; lightnings = []; heals = []; inventory = [];
         hasShield = false; explosionAlpha = 0; resetJoystick(null, true); resetJoystick(null, false);
         isBursting = false; burstShotsFired = 0; lastBurstBulletTime = 0; lastShotTime = Date.now();
         gameState = "PLAYING"; spawnMonsters();
@@ -201,13 +211,12 @@
         document.getElementById('startScreen').style.display = 'none'; topStatsUI.style.display = 'flex'; inventoryBarUI.style.display = 'flex'; statBossUI.style.display = 'none';
         practiceSpawnerUI.style.display = 'block'; 
         
-        // Hide the spawner grid by default so screen isn't blocked
         spawnerVisible = false;
         document.getElementById('spawnerButtons').style.display = 'none';
         document.getElementById('toggleSpawnerBtn').innerText = '🛠️ Show Tools';
 
         isPracticeMode = true; player.health = player.maxHealth; player.x = canvas.width / 2; player.y = canvas.height / 2; player.giantTimer = 0; player.godModeTimer = 0;
-        playerPets = []; bullets = []; enemyBullets = []; monsters = []; bosses = []; bananas = []; shields = []; stars = []; lightnings = []; inventory = [];
+        playerPets = []; bullets = []; enemyBullets = []; monsters = []; bosses = []; bananas = []; shields = []; stars = []; lightnings = []; heals = []; inventory = [];
         hasShield = false; explosionAlpha = 0; resetJoystick(null, true); resetJoystick(null, false);
         isBursting = false; burstShotsFired = 0; lastBurstBulletTime = 0; lastShotTime = Date.now();
         gameState = "PLAYING"; spawnBoss(bossType);
@@ -236,6 +245,9 @@
             player.giantTimer += 5000;
         } else if (type === 'lightning') {
             player.godModeTimer += 5000;
+        } else if (type === 'heal') {
+            // Heal exactly 1/4 of max health (25 HP), but never go above max health (100)
+            player.health = Math.min(player.maxHealth, player.health + (player.maxHealth / 4));
         }
     };
 
@@ -272,6 +284,7 @@
     window.giveShield = function() { if(inventory.length < MAX_INV) inventory.push('shield'); };
     window.giveRampage = function() { if(inventory.length < MAX_INV) inventory.push('star'); }; 
     window.giveGodMode = function() { if(inventory.length < MAX_INV) inventory.push('lightning'); };
+    window.giveHeal = function() { if(inventory.length < MAX_INV) inventory.push('heal'); }; // NEW HEAL POWERUP
 
     window.spawnPet = function(type, x, y) {
         let pet = { x: x, y: y, angle: 0, lastShotTime: 0, type: type };
@@ -307,6 +320,7 @@
                 if (inventory[i] === 'shield') slot.innerText = '🛡️';
                 if (inventory[i] === 'star') slot.innerText = '⭐';
                 if (inventory[i] === 'lightning') slot.innerText = '⚡';
+                if (inventory[i] === 'heal') slot.innerText = '💖';
             } else {
                 slot.className = 'inv-slot';
                 slot.innerText = '';
@@ -379,6 +393,7 @@
         for (let i = shields.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, shields[i].x, shields[i].y) < cHitbox + shields[i].radius) { if(inventory.length < MAX_INV) { inventory.push('shield'); shields.splice(i, 1); } }
         for (let i = stars.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, stars[i].x, stars[i].y) < cHitbox + stars[i].radius) { if(inventory.length < MAX_INV) { inventory.push('star'); stars.splice(i, 1); } }
         for (let i = lightnings.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, lightnings[i].x, lightnings[i].y) < cHitbox + lightnings[i].radius) { if(inventory.length < MAX_INV) { inventory.push('lightning'); lightnings.splice(i, 1); } }
+        for (let i = heals.length - 1; i >= 0; i--) if (getDistance(player.x, player.y, heals[i].x, heals[i].y) < cHitbox + heals[i].radius) { if(inventory.length < MAX_INV) { inventory.push('heal'); heals.splice(i, 1); } }
 
         for (let i = bullets.length - 1; i >= 0; i--) { let b = bullets[i]; b.x += b.dx; b.y += b.dy; if (b.x < -20 || b.x > canvas.width + 20 || b.y < -20 || b.y > canvas.height + 20) bullets.splice(i, 1); }
         for (let i = enemyBullets.length - 1; i >= 0; i--) { let bb = enemyBullets[i]; bb.x += bb.dx; bb.y += bb.dy; if (getDistance(player.x, player.y, bb.x, bb.y) < cHitbox + bb.radius) { if (!isGiant && !isGodMode) { if (hasShield) hasShield = false; else { player.health -= 15; if (player.health <= 0) triggerGameOver(); } } enemyBullets.splice(i, 1); continue; } if (bb.x < -20 || bb.x > canvas.width + 20 || bb.y < -20 || bb.y > canvas.height + 20) enemyBullets.splice(i, 1); }
@@ -433,6 +448,7 @@
                 else spawnMonsters(); 
                 
                 if (round % 20 === 0) spawnItem(lightnings);
+                if (round % 7 === 0) spawnItem(heals); // NEW HEAL SPAWN
 
                 if (round % 3 === 0) spawnItem(bananas); if (round % 5 === 0) spawnItem(shields); if (round % 11 === 0) spawnItem(stars); 
             }
@@ -451,6 +467,14 @@
             let p = Math.abs(Math.sin(Date.now()/50))*10; 
             ctx.fillStyle = "#00FFFF"; ctx.beginPath(); ctx.arc(l.x, l.y, l.radius+p, 0, Math.PI*2); ctx.fill(); 
             ctx.fillStyle = "#FFFFFF"; ctx.beginPath(); ctx.arc(l.x, l.y, l.radius/2, 0, Math.PI*2); ctx.fill(); 
+        });
+
+        // DRAW HEALS (Red circle with white cross)
+        heals.forEach(h => {
+            let p = Math.abs(Math.sin(Date.now()/200))*5;
+            ctx.fillStyle = "#e74c3c"; ctx.beginPath(); ctx.arc(h.x, h.y, h.radius+p, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "white"; ctx.fillRect(h.x - 3, h.y - 10, 6, 20); ctx.fillRect(h.x - 10, h.y - 3, 20, 6);
+            ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 2; ctx.stroke();
         });
 
         if (hasShield && !isGiant && !isGodMode) { ctx.beginPath(); ctx.arc(player.x, player.y, player.size+10, 0, Math.PI*2); ctx.fillStyle = "rgba(0,255,255,0.3)"; ctx.fill(); ctx.strokeStyle = "#00FFFF"; ctx.lineWidth = 3; ctx.stroke(); ctx.closePath(); }
