@@ -1,7 +1,7 @@
 {
-  "name": "100 Rounds of Monsters",
+  "name": "100 Rounds of Survival",
   "short_name": "100 Rounds",
-  "description": "Survive 100 rounds of monsters, build your pet squad, and unleash the banana bomb!",
+  "description": "Survive 100 rounds of monsters, build your pet squad, and unleash your SKILLS!",
   "start_url": "./index.html",
   "display": "fullscreen",
   "background_color": "#000000",
