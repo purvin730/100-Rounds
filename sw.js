@@ -1,4 +1,4 @@
-const CACHE_NAME = 'monster-survival-v2.0';
+const CACHE_NAME = 'v2';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
